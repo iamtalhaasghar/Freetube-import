@@ -29,7 +29,7 @@ for i in Videos:
 
 inputfile.close()
 print(f"Reading file {inputfile_name}, the to be converted playlistfile has {len(Video_IDs)} entries")
-print(f"writing to file {playlistname +".db"}")
+print(f"writing to file {playlistname}.db")
 playlist_dict=dict(
     playlistName=playlistname,
     videos=[],
