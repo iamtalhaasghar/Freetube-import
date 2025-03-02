@@ -1,6 +1,7 @@
 import uuid
 import time
 from sys import argv
+from pathlib import Path
 from youtube_search import YoutubeSearch
 import json
 from tqdm import tqdm
@@ -36,9 +37,9 @@ if 2>len(argv):
     print("You must include a path to a valid .txt file or youtube .csv playlistfile")
     exit(1)
 inputfile_name = argv[1]
-filenamesplit=inputfile_name.split(".")
-playlistname=filenamesplit[0]
-playlistformat=filenamesplit[1]
+playlistname=str(Path(inputfile_name).name)
+playlistformat=playlistname.split(".")[1]
+playlistname=playlistname.split(".")[0]
 playlist_UUID=uuid.uuid4()
 current_time_ms = int(time.time() * 1000)
 Video_IDs=[]
