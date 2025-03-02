@@ -5,13 +5,15 @@ Run the scrip with a path to a valid list of youtube urls, or youtube's .csv pla
 
       python create_db.py <file>
 
-Works without youtube api throug youtube-search. Some video names in playlists can get messed up because of this
-and while the channel names are mostly ok the links to channels are broken in playlist view, the links and thumbnails will be the same though. 
+Works without YouTube api through YouTube-search. While the script should work perfectly for 95% of the videos, minority of video and channel names in the playlist view can get messed up because of this, due to incorrect metadata fetch. Even while of the channel names are ok, The links to channel profile's are all broken in playlist view, since the fetching of proper channel-id's is not possible to get through this method. The video links themselves and their respective thumbnails should be the same though in all circumstances, and all the proper names and data is viewing correctly once the video is opened. Removing and re-adding the affected video from the playlist within Freetube should fix these flaws. 
 These are the costs for avoiding the hassle with google's own api.
 
 Also works atleast on piped links, probably also on lists of Invidious links and other links that follow the standard youtube url format.
 
 ###  Dependencies 
+
+       pip install youtube-search
 https://pypi.org/project/youtube-search/
 
+      pip install tqdm
 https://pypi.org/project/tqdm/
