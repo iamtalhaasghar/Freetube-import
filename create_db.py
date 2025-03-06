@@ -16,8 +16,11 @@ def process_txt(path):
         Video_IDs=[]
         for i in Videos:
             id=i.split("?v=")
-            id=id[1].rstrip()
-            Video_IDs.append(id)
+            try:
+                id=id[1].rstrip()
+                Video_IDs.append(id)
+            except IndexError:
+                pass
     return Video_IDs
 
 def process_csv(path):
