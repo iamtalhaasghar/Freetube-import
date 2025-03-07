@@ -4,6 +4,7 @@ from sys import argv
 from pathlib import Path
 from youtube_search import YoutubeSearch
 import json
+import argparse
 from tqdm import tqdm
 
 def YT_authordata(yt_id):
@@ -36,26 +37,26 @@ def process_csv(path):
                 Video_IDs.append(i.split(",")[0])
     return Video_IDs
 
-if 2>len(argv):
-    print("You must include a path to a valid .txt file or youtube .csv playlistfile")
-    exit(1)
-inputfile_name = argv[1]
-playlistname=str(Path(inputfile_name).name)
+parser = argparse.ArgumentParser(description="Import youtube playlists")
+parser.add_argument("filepath", type=str, help="path to a valid .txt or .csv playlist file")
+parser.add_argument('-l', '--log-errors',action='store_true', help="Also lists the videos that failed the metadata fetch")
+flags = parser.parse_args()
+playlistname=str(Path(flags.filepath).name)
 playlistformat=playlistname.split(".")[1]
 playlistname=playlistname.split(".")[0]
 playlist_UUID=uuid.uuid4()
 current_time_ms = int(time.time() * 1000)
 Video_IDs=[]
 if playlistformat=="txt":
-    Video_IDs=process_txt(inputfile_name)
+    Video_IDs=process_txt(flags.filepath)
 elif playlistformat=="csv":
-    Video_IDs=process_csv(inputfile_name)
+    Video_IDs=process_csv(flags.filepath)
 else:
     print(f"{playlistformat} is invalid file format.")
     exit(1)
 
 outputfile=open(playlistname+".db","w")
-print(f"Reading file {inputfile_name}, the playlistfile has {len(Video_IDs)} entries")
+print(f"Reading file {flags.filepath}, the playlistfile has {len(Video_IDs)} entries")
 print(f"writing to file {playlistname}.db")
 playlist_dict=dict(
     playlistName=playlistname,
@@ -65,12 +66,14 @@ playlist_dict=dict(
     lastUpdatedAt=current_time_ms
 )
 counter=0
+failed_ID=[]
 for i in tqdm(Video_IDs):
 #for i in Video_IDs:
     video_UUID=uuid.uuid4()
     current_time_ms = int(time.time()*1000)
     videoinfo=YT_authordata(i)
     if len(videoinfo)==0:
+        failed_ID.append(i)
         continue
     video_dict=dict(
         videoId=i,
@@ -87,4 +90,10 @@ for i in tqdm(Video_IDs):
     counter+=1
 outputfile.write(json.dumps(playlist_dict,separators=(',', ':'))+"\n")
 outputfile.close()
-print(f"Task failed successfully! {playlistname}.db written, with {counter} entries")
+if len(failed_ID) !=0 and flags.log_errors:
+    print(f"Task failed successfully! {playlistname}.db written, with {counter} entries")
+    print("[Failed playlist items]")
+    for i in failed_ID:
+        print('https://www.youtube.com/watch?v='+i)
+else:
+    print(f"Task failed successfully! {playlistname}.db written, with {counter} entries")
