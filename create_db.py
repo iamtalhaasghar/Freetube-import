@@ -15,8 +15,17 @@ def YT_authordata(yt_id)->list:
 def yt_video_title_fallback(url):
     web_request = requests.get(url)
     site_html = web_request.text
-    title = str(re.search('<\W*title\W*(.*)</title', site_html, re.IGNORECASE))
-    return title.split("- YouTube")[0]
+    title = re.search(r'<title\s*.*?>(.*?)</title\s*>', site_html, re.IGNORECASE)
+    return title.group(1).split("- YouTube")[0]
+
+def get_duration(time):
+    try:
+        minutes_and_seconds=time.split(".")
+        return int(minutes_and_seconds[0])*60+int(minutes_and_seconds[1])
+    except Exception as e:    
+        print(e)
+        return "0:00"
+
 
 def process_txt(path):
     with open(path, "r") as inputfile:
@@ -97,7 +106,7 @@ for i in tqdm(Video_IDs):
         author=videoinfo[0]['channel'],
         authorId="UC2hkwpSfrl6iniQNbwFXMog",
         published="",
-        lengthSeconds="0:00",
+        lengthSeconds=get_duration(videoinfo[0]["duration"]),
         timeAdded=current_time_ms,
         type="video",
         playlistItemId=str(video_UUID)
