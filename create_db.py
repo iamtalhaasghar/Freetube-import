@@ -8,15 +8,15 @@ from tqdm import tqdm
 import re
 import requests
 
-def YT_authordata(yt_id):
+def YT_authordata(yt_id)->list:
     results = YoutubeSearch('https://www.youtube.com/watch?v='+yt_id, max_results=1).to_dict()
     return results
 
 def yt_video_title_fallback(url):
     web_request = requests.get(url)
     site_html = web_request.text
-    title = re.search('<\W*title\W*(.*)</title', site_html, re.IGNORECASE)
-    return title.group(1).split("- YouTube")[0]
+    title = str(re.search('<\W*title\W*(.*)</title', site_html, re.IGNORECASE))
+    return title.split("- YouTube")[0]
 
 def process_txt(path):
     with open(path, "r") as inputfile:
@@ -84,10 +84,13 @@ for i in tqdm(Video_IDs):
         failed_ID.append(i)
         continue
     video_title=videoinfo[0]['title']
-    videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
-    if videoinfo_ID!=i:
-        video_title=yt_video_title_fallback("https://www.youtube.com/watch?v="+i)
-        failed_yt_search.append(i)
+    try:
+        videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
+        if videoinfo_ID!=i:
+            video_title=yt_video_title_fallback("https://www.youtube.com/watch?v="+i)
+            failed_yt_search.append(i)
+    except:
+        continue
     video_dict=dict(
         videoId=i,
         title=video_title,
