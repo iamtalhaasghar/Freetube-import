@@ -1,22 +1,29 @@
 import uuid
 import time
-from sys import argv
 from pathlib import Path
 from youtube_search import YoutubeSearch
 import json
 import argparse
 from tqdm import tqdm
+import re
+import requests
 
 def YT_authordata(yt_id):
     results = YoutubeSearch('https://www.youtube.com/watch?v='+yt_id, max_results=1).to_dict()
     return results
+
+def yt_video_title_fallback(url):
+    web_request = requests.get(url)
+    site_html = web_request.text
+    title = re.search('<\W*title\W*(.*)</title', site_html, re.IGNORECASE)
+    return title.group(1).split("- YouTube")[0]
 
 def process_txt(path):
     with open(path, "r") as inputfile:
         Videos=inputfile.readlines()
         Video_IDs=[]
         for i in Videos:
-            id=i.split("?v=")
+            id=re.split(r"\?v=|youtu\.be/",i)
             try:
                 id=id[1].rstrip()
                 Video_IDs.append(id)
@@ -65,7 +72,8 @@ playlist_dict=dict(
     createdAt=current_time_ms,
     lastUpdatedAt=current_time_ms
 )
-counter=0
+write_counter=0
+failed_yt_search=[]
 failed_ID=[]
 for i in tqdm(Video_IDs):
 #for i in Video_IDs:
@@ -75,9 +83,14 @@ for i in tqdm(Video_IDs):
     if len(videoinfo)==0:
         failed_ID.append(i)
         continue
+    video_title=videoinfo[0]['title']
+    videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
+    if videoinfo_ID!=i:
+        video_title=yt_video_title_fallback("https://www.youtube.com/watch?v="+i)
+        failed_yt_search.append(i)
     video_dict=dict(
         videoId=i,
-        title=videoinfo[0]['title'],
+        title=video_title,
         author=videoinfo[0]['channel'],
         authorId="UC2hkwpSfrl6iniQNbwFXMog",
         published="",
@@ -87,13 +100,11 @@ for i in tqdm(Video_IDs):
         playlistItemId=str(video_UUID)
     )
     playlist_dict["videos"].append(video_dict)
-    counter+=1
+    write_counter+=1
 outputfile.write(json.dumps(playlist_dict,separators=(',', ':'))+"\n")
 outputfile.close()
+print(f"Task failed successfully! {playlistname}.db written, with {write_counter} entries")
 if len(failed_ID) !=0 and flags.log_errors:
-    print(f"Task failed successfully! {playlistname}.db written, with {counter} entries")
     print("[Failed playlist items]")
     for i in failed_ID:
         print('https://www.youtube.com/watch?v='+i)
-else:
-    print(f"Task failed successfully! {playlistname}.db written, with {counter} entries")
