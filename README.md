@@ -20,7 +20,7 @@ Help message:
 
 Works without YouTube api through YouTube-search. 
 
-While the script should work perfectly for 95% of the videos, some channel names in the playlist view can get messed up because of this. This is due to incorrect metadata fetch. Even while of the channel names are ok, The links to channel profile's are all broken in playlist view, since the fetching of proper channel-id's is not possible through this method. 
+While the script should work perfectly for 95% of the videos, some channel names in the playlist view can however get messed up. This is due to incorrect metadata fetch. Even while of the channel names are ok, The links to channel profile's are all broken in playlist view, since the fetching of proper channel-id's is not possible through this method. 
 The video links themselves and their respective thumbnails should be the same though in all circumstances, and all the proper names and data is viewing correctly once the video is opened. Removing and re-adding the affected video from the playlist within Freetube should fix these flaws. 
 These are the costs for avoiding the hassle with google's own api.
 
