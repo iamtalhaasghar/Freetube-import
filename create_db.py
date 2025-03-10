@@ -20,8 +20,13 @@ def yt_video_title_fallback(url):
 
 def get_duration(time):
     try:
-        minutes_and_seconds=time.split(".")
-        return int(minutes_and_seconds[0])*60+int(minutes_and_seconds[1])
+        time_parts=re.split("\.|\:",time)
+        seconds=int(time_parts[-1])
+        minutes=int(time_parts[-2])
+        hours=0
+        if len(time_parts)==3:
+            hours=int(time_parts[0])
+        return seconds+minutes*60+hours*3600
     except Exception as e:    
         print(e)
         return "0:00"
@@ -93,10 +98,12 @@ for i in tqdm(Video_IDs):
         failed_ID.append(i)
         continue
     video_title=videoinfo[0]['title']
+    video_duration=get_duration(videoinfo[0]["duration"])
     try:
         videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
         if videoinfo_ID!=i:
             video_title=yt_video_title_fallback("https://www.youtube.com/watch?v="+i)
+            video_duration="0:00"
             failed_yt_search.append(i)
     except:
         continue
@@ -106,7 +113,7 @@ for i in tqdm(Video_IDs):
         author=videoinfo[0]['channel'],
         authorId="UC2hkwpSfrl6iniQNbwFXMog",
         published="",
-        lengthSeconds=get_duration(videoinfo[0]["duration"]),
+        lengthSeconds=video_duration,
         timeAdded=current_time_ms,
         type="video",
         playlistItemId=str(video_UUID)
