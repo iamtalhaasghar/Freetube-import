@@ -9,11 +9,14 @@ import re
 import requests
 
 def YT_authordata(yt_id)->list:
+    if yt_id[0]=="_":
+        results = YoutubeSearch('https://www.youtube.com/watch?v=//'+yt_id, max_results=1).to_dict()
+        return results
     results = YoutubeSearch('https://www.youtube.com/watch?v='+yt_id, max_results=1).to_dict()
     return results
 
 def yt_video_title_fallback(url):
-    web_request = requests.get(url)
+    web_request = requests.get("https://www.youtube.com/watch?v="+url)
     site_html = web_request.text
     title = re.search(r'<title\s*.*?>(.*?)</title\s*>', site_html, re.IGNORECASE)
     return title.group(1).split("- YouTube")[0]
@@ -102,7 +105,9 @@ for i in tqdm(Video_IDs):
     try:
         videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
         if videoinfo_ID!=i:
-            video_title=yt_video_title_fallback("https://www.youtube.com/watch?v="+i)
+            video_title=yt_video_title_fallback(i)
+            if len(video_title)<2:
+                continue
             video_duration="0:00"
             failed_yt_search.append(i)
     except:
