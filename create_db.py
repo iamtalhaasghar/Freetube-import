@@ -23,7 +23,7 @@ def yt_video_title_fallback(url):
 
 def get_duration(time):
     try:
-        time_parts=re.split("\.|\:",time)
+        time_parts=re.split(r"[.:]",time)
         seconds=int(time_parts[-1])
         minutes=int(time_parts[-2])
         hours=0
