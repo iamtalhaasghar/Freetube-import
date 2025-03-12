@@ -18,13 +18,10 @@ Help message:
         -h, --help        show this help message and exit
         -l, --log-errors  Also lists the videos that failed the metadata fetch
 
-Works without YouTube api through YouTube-search. 
+Works without YouTube api through YouTube-search library. Also works atleast on piped links, probably also on lists of Invidious links and other links that follow the standard youtube url format.
 
-While the script should work perfectly for 95% of the videos, some channel names in the playlist view can however get messed up. This is due to incorrect metadata fetch. Even while of the channel names are ok, The links to channel profile's are all broken in playlist view, since the fetching of proper channel-id's is not possible through this method. 
-The video links themselves and their respective thumbnails should be the same though in all circumstances, and all the proper names and data is viewing correctly once the video is opened. Removing and re-adding the affected video from the playlist within Freetube should fix these flaws. 
+While the script should work perfectly for 95% of the videos, some channel names in the playlist view can however get messed up. This is due to incorrect metadata fetch. Clicking the link to the video's channel in playlist view also does not work, but does work after opening the video. 
 These are the costs for avoiding the hassle with google's own api.
-
-Also works atleast on piped links, probably also on lists of Invidious links and other links that follow the standard youtube url format.
 
 ###  Dependencies 
 
