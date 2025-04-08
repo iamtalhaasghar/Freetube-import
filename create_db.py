@@ -7,6 +7,7 @@ import argparse
 from tqdm import tqdm
 import re
 import requests
+import os
 
 def YT_authordata(yt_id)->list:
     if yt_id[0]=="_":
@@ -28,7 +29,7 @@ def get_duration(time):
         if len(time_parts)==3:
             hours=int(time_parts[0])
         return seconds+minutes*60+hours*3600
-    except Exception as e:    
+    except Exception as e:
         print(e)
         return "0:00"
 
@@ -58,82 +59,112 @@ def process_csv(path):
                 Video_IDs.append(i.split(",")[0])
     return Video_IDs
 
-parser = argparse.ArgumentParser(description="Import youtube playlists")
-parser.add_argument("filepath", type=str, help="path to a valid .txt or .csv playlist file")
-parser.add_argument('-l', '--log-errors',action='store_true', help="Also lists the videos that failed the metadata fetch")
-flags = parser.parse_args()
-playlistname=str(Path(flags.filepath).name)
-playlistformat=playlistname.split(".")[1]
-playlistname=playlistname.split(".")[0]
-playlist_UUID=uuid.uuid4()
-current_time_ms = int(time.time() * 1000)
-Video_IDs=[]
-if playlistformat=="txt":
-    Video_IDs=process_txt(flags.filepath)
-elif playlistformat=="csv":
-    Video_IDs=process_csv(flags.filepath)
-else:
-    print(f"{playlistformat} is invalid file format.")
-    exit(1)
-print(f"Reading file {flags.filepath}, the playlistfile has {len(Video_IDs)} entries")
-print(f"writing to file {playlistname}.db")
-playlist_dict=dict(
-    playlistName=playlistname,
-    videos=[],
-    _id="ft-playlist--"+str(playlist_UUID),
-    createdAt=current_time_ms,
-    lastUpdatedAt=current_time_ms
-)
-write_counter=0
-failed_yt_search=[]
-failed_ID=[]
-for i in tqdm(Video_IDs):
-#for i in Video_IDs:
-    video_UUID=uuid.uuid4()
-    current_time_ms = int(time.time()*1000)
-    videoinfo=YT_authordata(i)
-    if len(videoinfo)==0:
-        failed_ID.append(i)
-        continue
-    video_title=videoinfo[0]['title']
-    video_duration=get_duration(videoinfo[0]["duration"])
-    try:
-        videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
-        if videoinfo_ID!=i:
-            video_title=yt_video_title_fallback(i)
-            if len(video_title)<2:
-                failed_ID.append(i)
-                continue
-            video_duration="0:00"
-            failed_yt_search.append(i)
-    except:
-        failed_ID.append(i)
-        continue
-    video_dict=dict(
-        videoId=i,
-        title=video_title,
-        author=videoinfo[0]['channel'],
-        authorId="UC2hkwpSfrl6iniQNbwFXMog",
-        published="",
-        lengthSeconds=video_duration,
-        timeAdded=current_time_ms,
-        type="video",
-        playlistItemId=str(video_UUID)
+#Does the actual parsing and writing
+def process_playlist(playlist_filepath, log_errors=False):
+    playlistname=str(Path(playlist_filepath).name)
+    playlistformat=playlistname.split(".")[1]
+    playlistname=playlistname.split(".")[0]
+    Video_IDs=[]
+    if playlistformat=="txt":
+        Video_IDs=process_txt(playlist_filepath)
+    elif playlistformat=="csv":
+        Video_IDs=process_csv(playlist_filepath)
+    else:
+        print(f"{playlistformat} is invalid file format.")
+        return
+    print(f"Reading file {playlist_filepath}, the playlistfile has {len(Video_IDs)} entries")
+    print(f"writing to file {playlistname}.db")
+    playlist_UUID=uuid.uuid4()
+    current_time_ms = int(time.time() * 1000)
+    playlist_dict=dict(
+        playlistName=playlistname,
+        videos=[],
+        _id="ft-playlist--"+str(playlist_UUID),
+        createdAt=current_time_ms,
+        lastUpdatedAt=current_time_ms
     )
-    playlist_dict["videos"].append(video_dict)
-    write_counter+=1
-if len(playlist_dict["videos"]) !=0:
-    outputfile=open(playlistname+".db","w")
-    outputfile.write(json.dumps(playlist_dict,separators=(',', ':'))+"\n")
-    outputfile.close()
-    print(f"Task failed successfully! {playlistname}.db written, with {write_counter} entries")
-else:
-    print("No entries to write")
-if len(failed_ID) !=0 and flags.log_errors:
-    print("[Failed playlist items]")
-    for i in failed_ID:
-        print('https://www.youtube.com/watch?v='+i)
-#if len(failed_yt_search) !=0 and flags.log_errors:
-#    print("[Videos with possibly broken metadata]")
-#    for i in failed_yt_search:
-#        print('https://www.youtube.com/watch?v='+i)
+    write_counter=0
+    failed_yt_search=[]
+    failed_ID=[]
+    for i in tqdm(Video_IDs):
+    #for i in Video_IDs:
+        video_UUID=uuid.uuid4()
+        current_time_ms = int(time.time()*1000)
+        videoinfo=YT_authordata(i)
+        if len(videoinfo)==0:
+            failed_ID.append(i)
+            continue
+        video_title=videoinfo[0]['title']
+        video_duration=get_duration(videoinfo[0]["duration"])
+        try:
+            videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
+            if videoinfo_ID!=i:
+                video_title=yt_video_title_fallback(i)
+                if len(video_title)<2:
+                    failed_ID.append(i)
+                    continue
+                video_duration="0:00"
+                failed_yt_search.append(i)
+        except:
+            failed_ID.append(i)
+            continue
+        video_dict=dict(
+            videoId=i,
+            title=video_title,
+            author=videoinfo[0]['channel'],
+            authorId="UC2hkwpSfrl6iniQNbwFXMog",
+            published="",
+            lengthSeconds=video_duration,
+            timeAdded=current_time_ms,
+            type="video",
+            playlistItemId=str(video_UUID)
+        )
+        playlist_dict["videos"].append(video_dict)
+        write_counter+=1
+    if len(playlist_dict["videos"]) !=0:
+        outputfile=open(playlistname+".db","w")
+        outputfile.write(json.dumps(playlist_dict,separators=(',', ':'))+"\n")
+        outputfile.close()
+        print(f"Task failed successfully! {playlistname}.db written, with {write_counter} entries")
+    else:
+        print("No entries to write")
+    if len(failed_ID) !=0 and log_errors:
+        print("[Failed playlist items]")
+        for i in failed_ID:
+            print('https://www.youtube.com/watch?v='+i)
+    #if len(failed_yt_search) !=0 and log_errors:
+    #    print("[Videos with possibly broken metadata]")
+    #    for i in failed_yt_search:
+    #        print('https://www.youtube.com/watch?v='+i)
+
+def main():
+    parser = argparse.ArgumentParser(description="Import youtube playlists")
+    parser.add_argument("filepath", type=str, help="path to a valid .txt or .csv playlist file or files", nargs="*")
+    parser.add_argument('-l', '--log-errors',action='store_true', help="Also lists the videos that failed the metadata fetch")
+    parser.add_argument('-a', '--list-all',action='store_true', help="Takes all .txt and csv files as input from the current working directory.")
+    flags = parser.parse_args()
+    playlist_files=flags.filepath
+    log_errors=flags.log_errors
+    #list txt and csv files in current working directory
+    if flags.list_all:
+        playlist_files=[]
+        for i in os.listdir(os.getcwd()):
+            if os.path.isfile(i):
+                if i.split(".")[-1] in ("txt", "csv"):
+                    playlist_files.append(i)
+    #if only a single entry
+    if len(playlist_files)==1:
+        process_playlist(playlist_files[0],log_errors)
+        exit(0)
+    # for multiple entries
+    for i,playlist in enumerate(playlist_files,start=1):
+        filename=str(Path(playlist).name)
+        print(f"[{i}/{len(playlist_files)}] {filename}")
+        try:
+            process_playlist(playlist,log_errors)
+        except Exception as e:
+            print(f"{filename} Failed: {e}")
+        print(" ")
+
+if __name__ == "__main__":
+    main()

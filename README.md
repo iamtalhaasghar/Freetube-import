@@ -3,20 +3,18 @@ Creates Freetube .db style playlist files from a list of youtube urls (.txt) or 
 
 Run the scrip with a path to a valid list of youtube urls, or youtube's .csv playlist file. Then import the .db file into Freetube.
 
-      python create_db.py <file>
+      python create_db.py <file>... <file2> <file3>
 
 Help message:
 
-      usage: create_db.py [-h] [-l] filepath
-
+      usage: create_db.py [-h] [-l] [-a] [filepath ...]
       Import youtube playlists
-
       positional arguments:
-        filepath          path to a valid .txt or .csv playlist file
-
-      optional arguments:
+        filepath          path to a valid .txt or .csv playlist file or files
+      options:
         -h, --help        show this help message and exit
         -l, --log-errors  Also lists the videos that failed the metadata fetch
+        -a, --list-all    Takes all .txt and csv files as input from the current working directory.
 
 Works without YouTube api through YouTube-search library. Also works atleast on piped links, probably also on lists of Invidious links and other links that follow the standard youtube url format.
 
