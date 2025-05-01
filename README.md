@@ -1,4 +1,6 @@
-![PyPI](https://img.shields.io/pypi/v/freetube-import?label=pypi%20package)
+![PyPI](https://img.shields.io/pypi/v/freetube-import?label=pypi%20package)![PyPI - Downloads](https://img.shields.io/pypi/dm/freetube-import)
+
+
 
 # Freetube-import
 Creates Freetube .db style playlist files from a list of youtube urls (.txt) or from .csv files exported from 'Google takeout'.
