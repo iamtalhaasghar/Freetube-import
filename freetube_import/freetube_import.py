@@ -65,8 +65,9 @@ def process_csv(path):
 #Does the actual parsing and writing
 def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=False):
     playlistname=str(Path(playlist_filepath).name)
-    playlistformat=playlistname.split(".")[1]
-    playlistname=playlistname.split(".")[0]
+    # a playlist name could have a dot in it so use splitext instead of splitting on a '.'
+    playlistformat=os.path.splitext(playlistname)[1][1:].strip().lower()
+    playlistname=os.path.splitext(playlistname)[0]
     Video_IDs=[]
     if playlistformat=="txt":
         Video_IDs=process_txt(playlist_filepath)
