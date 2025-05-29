@@ -33,7 +33,7 @@ class YoutubeSearch:
         data = json.loads(json_str)
 
         for contents in data["contents"]["twoColumnSearchResultsRenderer"]["primaryContents"]["sectionListRenderer"]["contents"]:
-            if contents is None or contents.get('itemSectionRenderer', undefined) is undefined:
+            if contents is None or not contents.get('itemSectionRenderer'):
                 warnings.warn(f'Invalid: {self.search_terms}')
             else:
                 for video in contents["itemSectionRenderer"]["contents"]:
