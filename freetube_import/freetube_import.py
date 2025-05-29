@@ -9,6 +9,7 @@ import re
 import sys
 import requests
 import os
+import html
 
 def YT_authordata(yt_id)->list:
     if yt_id[0]=="_":
@@ -19,7 +20,7 @@ def yt_video_title_fallback(url):
     web_request = requests.get("https://www.youtube.com/watch?v="+url)
     site_html = web_request.text
     title = re.search(r'<title\s*.*?>(.*?)</title\s*>', site_html, re.IGNORECASE)
-    return title.group(1).split("- YouTube")[0]
+    return html.unescape(title.group(1).split("- YouTube")[0])
 
 def get_duration(time):
     try:
