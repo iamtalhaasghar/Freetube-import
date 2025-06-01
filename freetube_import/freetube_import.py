@@ -16,11 +16,18 @@ def YT_authordata(yt_id)->list:
         return YoutubeSearch('https://www.youtube.com/watch?v=//'+yt_id, max_results=1).to_dict()
     return YoutubeSearch('https://www.youtube.com/watch?v='+yt_id, max_results=1).to_dict()
 
-def yt_video_title_fallback(url):
+def yt_video_data_fallback(url):
     web_request = requests.get("https://www.youtube.com/watch?v="+url)
     site_html = web_request.text
-    title = re.search(r'<title\s*.*?>(.*?)</title\s*>', site_html, re.IGNORECASE)
-    return html.unescape(title.group(1).split("- YouTube")[0])
+    title = re.search(r'<title\s*.*?>(.*?)</title\s*>', site_html, re.IGNORECASE).group(1)
+    author = re.search(r'"author":"(.*?)"', site_html, re.IGNORECASE).group(1)
+    channelId = re.search(r'"channelId":"(.*?)"', site_html, re.IGNORECASE).group(1)
+    endTimeMs = int(re.search(r'"endTimeMs":"(.*?)"', site_html, re.IGNORECASE).group(1))
+    return dict(title=html.unescape(title.split("- YouTube")[0]),
+                author=html.unescape(author),
+                channelId=channelId,
+                lengthSeconds=int(endTimeMs/1000)
+                )
 
 def get_duration(time):
     try:
@@ -100,6 +107,7 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
             failed_ID.append(i)
             continue
         video_title=videoinfo[0]['title']
+        channel_name=videoinfo[0]['channel']
         channel_id=videoinfo[0]['channelId']
         if channel_id==None:
             channel_id="UC2hkwpSfrl6iniQNbwFXMog"
@@ -107,11 +115,16 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
         try:
             videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
             if videoinfo_ID!=i:
-                video_title=yt_video_title_fallback(i)
+                #fetches the data directly from the video
+                fallback_data=yt_video_data_fallback(i)
+                video_title=fallback_data["title"]
+                channel_name=fallback_data["author"]
+                channel_id=fallback_data["channelId"]
+                video_duration=fallback_data["lengthSeconds"]
                 if len(video_title)<2:
                     failed_ID.append(i)
                     continue
-                video_duration="0:00"
+                #video_duration="0:00"
                 failed_yt_search.append(i)
         except:
             failed_ID.append(i)
@@ -119,7 +132,7 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
         video_dict=dict(
             videoId=i,
             title=video_title,
-            author=videoinfo[0]['channel'],
+            author=channel_name,
             authorId=channel_id,
             published="",
             lengthSeconds=video_duration,
