@@ -12,10 +12,13 @@ import os
 import html
 import urllib.parse
 
-def YT_authordata(yt_id)->dict:
-    if yt_id[0]=="_":
-        return YoutubeSearch('https://www.youtube.com/watch?v=//'+yt_id, max_results=1).to_dict()[0]
-    return YoutubeSearch('https://www.youtube.com/watch?v='+yt_id, max_results=1).to_dict()[0]
+def YT_authordata(yt_id):
+    try:
+        if yt_id[0]=="_":
+            return YoutubeSearch('https://www.youtube.com/watch?v=//'+yt_id, max_results=1).to_dict()[0]
+        return YoutubeSearch('https://www.youtube.com/watch?v='+yt_id, max_results=1).to_dict()[0]
+    except IndexError:
+        return None
 
 def yt_video_data_fallback(url):
     url_quoted=urllib.parse.quote_plus(url)
@@ -129,7 +132,7 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
         video_UUID=uuid.uuid4()
         current_time_ms = int(time.time()*1000)
         videoinfo=YT_authordata(i)
-        if len(videoinfo)==0:
+        if not videoinfo:
             failed_ID.append(i)
             continue
         video_title=videoinfo['title']
@@ -143,7 +146,7 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
             if videoinfo_ID!=i:
                 #fetches the data directly from the video
                 fallback_data=yt_video_data_fallback(i)
-                if fallback_data is not None:
+                if fallback_data["title"]:
                     video_title=fallback_data["title"]
                     channel_name=fallback_data["author"]
                     channel_id=fallback_data["channelId"]
@@ -152,7 +155,6 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
                     print(f"failed {video_title}")
                     failed_ID.append(i)
                     continue
-                #video_duration="0:00"
                 failed_yt_search.append(i)
         except Exception as e:
             failed_ID.append(i)
