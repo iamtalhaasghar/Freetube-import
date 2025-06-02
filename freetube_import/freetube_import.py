@@ -10,23 +10,49 @@ import sys
 import requests
 import os
 import html
+import urllib.parse
 
-def YT_authordata(yt_id)->list:
+def YT_authordata(yt_id)->dict:
     if yt_id[0]=="_":
-        return YoutubeSearch('https://www.youtube.com/watch?v=//'+yt_id, max_results=1).to_dict()
-    return YoutubeSearch('https://www.youtube.com/watch?v='+yt_id, max_results=1).to_dict()
+        return YoutubeSearch('https://www.youtube.com/watch?v=//'+yt_id, max_results=1).to_dict()[0]
+    return YoutubeSearch('https://www.youtube.com/watch?v='+yt_id, max_results=1).to_dict()[0]
 
 def yt_video_data_fallback(url):
-    web_request = requests.get("https://www.youtube.com/watch?v="+url)
+    url_quoted=urllib.parse.quote_plus(url)
+    web_request = requests.get("https://www.youtube.com/watch?v="+url_quoted)
     site_html = web_request.text
-    title = re.search(r'<title\s*.*?>(.*?)</title\s*>', site_html, re.IGNORECASE).group(1)
-    author = re.search(r'"author":"(.*?)"', site_html, re.IGNORECASE).group(1)
-    channelId = re.search(r'"channelId":"(.*?)"', site_html, re.IGNORECASE).group(1)
-    endTimeMs = int(re.search(r'"endTimeMs":"(.*?)"', site_html, re.IGNORECASE).group(1))
-    return dict(title=html.unescape(title.split("- YouTube")[0]),
+    try:
+        title = re.search(r'<title\s*.*?>(.*?)</title\s*>', site_html, re.IGNORECASE) 
+        if title:
+            title=html.unescape(title.group(1).split("- YouTube")[0])
+        else:
+            title="video"
+
+        author = re.search(r'"author":"(.*?)"', site_html, re.IGNORECASE)
+        if author:
+            author = author.group(1)
+        else:
+            author = "channel"
+
+        channelId = re.search(r'"channelId":"(.*?)"', site_html, re.IGNORECASE)
+        if channelId:
+            channelId=channelId.group(1)
+        else:
+            channelId = "UCGBhVKHvwL386p13_-n3YPg"
+
+        endTimeMs = re.search(r'"endTimeMs":"(.*?)"', site_html, re.IGNORECASE)
+        if endTimeMs:
+            endTimeMs = int(endTimeMs.group(1))/1000
+        else:
+            endTimeMs = "0:00"
+
+    except Exception as e:
+        print(e)
+        return None
+    return dict(title=title,
                 author=html.unescape(author),
                 channelId=channelId,
-                lengthSeconds=int(endTimeMs/1000)
+                lengthSeconds=endTimeMs
                 )
 
 def get_duration(time):
@@ -106,28 +132,31 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
         if len(videoinfo)==0:
             failed_ID.append(i)
             continue
-        video_title=videoinfo[0]['title']
-        channel_name=videoinfo[0]['channel']
-        channel_id=videoinfo[0]['channelId']
+        video_title=videoinfo['title']
+        channel_name=videoinfo['channel']
+        channel_id=videoinfo['channelId']
         if channel_id==None:
             channel_id="UC2hkwpSfrl6iniQNbwFXMog"
-        video_duration=get_duration(videoinfo[0]["duration"])
+        video_duration=get_duration(videoinfo["duration"])
         try:
-            videoinfo_ID=videoinfo[0]['url_suffix'].split("?v=")[1].split("&pp=")[0]
+            videoinfo_ID=videoinfo['url_suffix'].split("?v=")[1].split("&pp=")[0]
             if videoinfo_ID!=i:
                 #fetches the data directly from the video
                 fallback_data=yt_video_data_fallback(i)
-                video_title=fallback_data["title"]
-                channel_name=fallback_data["author"]
-                channel_id=fallback_data["channelId"]
-                video_duration=fallback_data["lengthSeconds"]
-                if len(video_title)<2:
+                if fallback_data is not None:
+                    video_title=fallback_data["title"]
+                    channel_name=fallback_data["author"]
+                    channel_id=fallback_data["channelId"]
+                    video_duration=fallback_data["lengthSeconds"]
+                if not video_title:
+                    print(f"failed {video_title}")
                     failed_ID.append(i)
                     continue
                 #video_duration="0:00"
                 failed_yt_search.append(i)
-        except:
+        except Exception as e:
             failed_ID.append(i)
+            print(e)
             continue
         video_dict=dict(
             videoId=i,
