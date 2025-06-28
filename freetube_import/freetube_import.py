@@ -76,7 +76,7 @@ def process_txt(path):
         Videos=inputfile.readlines()
         Video_IDs=[]
         for i in Videos:
-            id=re.split(r"\?v=|youtu\.be/",i)
+            id=re.split(r"\?v=|youtu\.be/|shorts/",i)
             try:
                 id=id[1].rstrip()
                 Video_IDs.append(id)
