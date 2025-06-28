@@ -132,19 +132,28 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
         video_UUID=uuid.uuid4()
         current_time_ms = int(time.time()*1000)
         videoinfo=YT_authordata(i)
-        if not videoinfo:
-            failed_ID.append(i)
-            continue
-        video_title=videoinfo['title']
-        channel_name=videoinfo['channel']
-        channel_id=videoinfo['channelId']
-        if channel_id==None:
-            channel_id="UC2hkwpSfrl6iniQNbwFXMog"
-        video_duration=get_duration(videoinfo["duration"])
+        if videoinfo:
+            video_title=videoinfo['title']
+            channel_name=videoinfo['channel']
+            channel_id=videoinfo['channelId']
+            if not channel_id:
+                channel_id="UC2hkwpSfrl6iniQNbwFXMog"
+            video_duration=get_duration(videoinfo["duration"])
         try:
-            videoinfo_ID=videoinfo['url_suffix'].split("?v=")[1].split("&pp=")[0]
+            try:
+                #'&list=' seems to be primary alternative
+                videoinfo_ID=videoinfo['url_suffix'].split("?v=")[1].split("&list=")[0]
+                if len(videoinfo_ID)!=11:
+                    #'&pp=' is secondary
+                    videoinfo_ID=videoinfo['url_suffix'].split("?v=")[1].split("&pp=")[0]
+            except IndexError:
+                #For getting YT-shorts Id
+                videoinfo_ID=videoinfo['url_suffix'].split("shorts/")[1].split("&pp=")[0]
+            except TypeError:
+                pass
+
             if videoinfo_ID!=i:
-                #fetches the data directly from the video
+                #fetches the metadata directly from the video site when YoutubeSearch fails
                 fallback_data=yt_video_data_fallback(i)
                 if fallback_data["title"]:
                     video_title=fallback_data["title"]
@@ -152,7 +161,6 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
                     channel_id=fallback_data["channelId"]
                     video_duration=fallback_data["lengthSeconds"]
                 if not video_title:
-                    print(f"failed {video_title}")
                     failed_ID.append(i)
                     continue
                 failed_yt_search.append(i)
