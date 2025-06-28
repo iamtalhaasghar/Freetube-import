@@ -142,9 +142,12 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
             channel_id="UC2hkwpSfrl6iniQNbwFXMog"
         video_duration=get_duration(videoinfo["duration"])
         try:
-            videoinfo_ID=videoinfo['url_suffix'].split("?v=")[1].split("&pp=")[0]
+            try:
+                videoinfo_ID=videoinfo['url_suffix'].split("?v=")[1].split("&pp=")[0]
+            except IndexError:
+                videoinfo_ID=videoinfo['url_suffix'].split("shorts/")[1].split("&pp=")[0]
             if videoinfo_ID!=i:
-                #fetches the data directly from the video
+                #fetches the metadata directly from the video site
                 fallback_data=yt_video_data_fallback(i)
                 if fallback_data["title"]:
                     video_title=fallback_data["title"]
