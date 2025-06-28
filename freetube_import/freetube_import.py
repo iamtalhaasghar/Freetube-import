@@ -141,17 +141,9 @@ def process_playlist(playlist_filepath, log_errors=False,list_broken_videos=Fals
             video_duration=get_duration(videoinfo["duration"])
         try:
             try:
-                #'&list=' seems to be primary alternative
-                videoinfo_ID=videoinfo['url_suffix'].split("?v=")[1].split("&list=")[0]
-                if len(videoinfo_ID)!=11:
-                    #'&pp=' is secondary
-                    videoinfo_ID=videoinfo['url_suffix'].split("?v=")[1].split("&pp=")[0]
-            except IndexError:
-                #For getting YT-shorts Id
-                videoinfo_ID=videoinfo['url_suffix'].split("shorts/")[1].split("&pp=")[0]
+                videoinfo_ID=videoinfo['id']
             except TypeError:
                 pass
-
             if videoinfo_ID!=i:
                 #fetches the metadata directly from the video site when YoutubeSearch fails
                 fallback_data=yt_video_data_fallback(i)
