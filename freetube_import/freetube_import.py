@@ -1,7 +1,7 @@
 import uuid
 import time
 from pathlib import Path
-from .youtube_search import YoutubeSearch
+from youtube_search import YoutubeSearch
 import json
 import argparse
 from tqdm import tqdm
@@ -33,9 +33,9 @@ def yt_video_data_fallback(url):
         title = re.search(r'<title\s*.*?>(.*?)</title\s*>', site_html, re.IGNORECASE)
         if title:
             title = html.unescape(title.group(1).split("- YouTube")[0])
-        else:
-            title = "video"
+        if len(title) < 2:
             logger.warning(f"{url}: Fallback function. getting video title failed")
+            return None
 
         author = re.search(r'"author":"(.*?)"', site_html, re.IGNORECASE)
         if author:
@@ -196,7 +196,7 @@ def process_playlist(playlist_filepath, log_errors=False, list_broken_videos=Fal
         logger.info(f"https://www.youtube.com/watch?v={i} written successfully")
     if len(playlist_dict["videos"]) != 0:
         outputfile = open(playlistname+".db", "w")
-        outputfile.write(json.dumps(playlist_dict,separators = (',', ':'))+"\n")
+        outputfile.write(json.dumps(playlist_dict, separators = (',', ':'))+"\n")
         outputfile.close()
         logger.info(f"{playlistname}.db written({write_counter}/{len(Video_IDs)})")
         print(f"Task failed successfully! {playlistname}.db written, with {write_counter} entries")
@@ -213,6 +213,7 @@ def process_playlist(playlist_filepath, log_errors=False, list_broken_videos=Fal
 
 
 def main():
+    # set logging to DEBUG for debug mode
     logger.setLevel(logging.ERROR)
     parser = argparse.ArgumentParser(description="Import youtube playlists")
     parser.add_argument("filepath", type=str, help="path to a valid .txt or .csv playlist file or files", nargs="*")
