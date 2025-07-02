@@ -1,7 +1,6 @@
 import uuid
 import time
 from pathlib import Path
-from .youtube_search import YoutubeSearch
 import json
 import argparse
 from tqdm import tqdm
@@ -12,6 +11,10 @@ import os
 import logging
 import html
 import urllib.parse
+try:
+    from youtube_search import YoutubeSearch
+except ImportError:
+    from .youtube_search import YoutubeSearch
 
 
 def YT_authordata(yt_id):
@@ -136,11 +139,11 @@ def process_playlist(playlist_filepath, log_errors=False, list_broken_videos=Fal
     playlist_UUID = uuid.uuid4()
     current_time_ms = int(time.time() * 1000)
     playlist_dict = dict(
-        playlistName = playlistname,
-        videos = [],
-        _id = "ft-playlist--" + str(playlist_UUID),
-        createdAt = current_time_ms,
-        lastUpdatedAt = current_time_ms
+        playlistName=playlistname,
+        videos=[],
+        _id="ft-playlist--" + str(playlist_UUID),
+        createdAt=current_time_ms,
+        lastUpdatedAt=current_time_ms
     )
     write_counter = 0
     failed_yt_search = []
@@ -165,16 +168,14 @@ def process_playlist(playlist_filepath, log_errors=False, list_broken_videos=Fal
             if videoinfo_ID != i:
                 logger.info(f"Youtube-search: {videoinfo_ID} and input Id: {i} missmatch")
                 # fetches the metadata directly from the video site when YoutubeSearch fails
-                fallback_data = yt_video_data_fallback(i)
+                if not (fallback_data := yt_video_data_fallback(i)):
+                    failed_ID.append(i)
+                    continue
                 if fallback_data["title"]:
                     video_title = fallback_data["title"]
                     channel_name = fallback_data["author"]
                     channel_id = fallback_data["channelId"]
                     video_duration = fallback_data["lengthSeconds"]
-                if not video_title:
-                    failed_ID.append(i)
-                    logger.error(f"video {i} failed")
-                    continue
                 failed_yt_search.append(i)
         except Exception as e:
             failed_ID.append(i)
