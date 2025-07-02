@@ -215,6 +215,7 @@ def process_playlist(playlist_filepath, log_errors=False, list_broken_videos=Fal
 def main():
     # set logging to DEBUG for debug mode
     logger.setLevel(logging.ERROR)
+    logging.basicConfig(format='[%(levelname)s] - %(message)s')
     parser = argparse.ArgumentParser(description="Import youtube playlists")
     parser.add_argument("filepath", type=str, help="path to a valid .txt or .csv playlist file or files", nargs="*")
     parser.add_argument('-a', '--list-all',action='store_true', help="Takes all .txt and csv files as input from the current working directory.")
@@ -247,7 +248,7 @@ def main():
         print(" ")
 
 
+logger = logging.getLogger(__name__)
+
 if __name__ == "__main__":
-    logging.basicConfig(format='[%(levelname)s] - %(message)s')
-    logger = logging.getLogger(__name__)
     main()
