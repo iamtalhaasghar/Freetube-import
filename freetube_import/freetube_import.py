@@ -104,16 +104,14 @@ def process_csv(path):
     with open(path, "r") as inputfile:
         Videos = inputfile.readlines()
         Video_IDs = []
-        data_start = False
         for i in Videos:
-            if not data_start:
-                data_start = True
-                continue
-            if data_start:
-                if not len(i.split(",")[0].strip()) == 11:
-                    continue
+            if not len(i.split(",")[0].strip()) == 11:
+                # get id after watch?v=
+                Video_IDs.append(i.split(",")[0].split('=')[1])
+            else:
+                # each line is just yt video id
                 Video_IDs.append(i.split(",")[0].strip())
-    logger.debug(f"{path} .csv file processed")
+    logger.debug(f"{path} .csv file processed. Found {len(Video_IDs)} videos.")
     return Video_IDs
 
 
@@ -215,7 +213,7 @@ def process_playlist(playlist_filepath, log_errors=False, list_broken_videos=Fal
 
 def main():
     # set logging to DEBUG for debug mode
-    logger.setLevel(logging.ERROR)
+    logger.setLevel(logging.DEBUG)
     logging.basicConfig(format='[%(levelname)s] - %(message)s')
     parser = argparse.ArgumentParser(description="Import youtube playlists")
     parser.add_argument("filepath", type=str, help="path to a valid .txt or .csv playlist file or files", nargs="*")
